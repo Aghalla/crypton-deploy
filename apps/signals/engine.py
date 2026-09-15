@@ -244,7 +244,7 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
     # --- 5. Confidence score ---
     confidence = compute_confidence(mtf, strategy_results, direction)
 
-    # --- 6. Trade setup ---
+    # --- 6. Trade setup (signal_type unknown yet — build with default, refine later) ---
     m5 = mtf.snapshot('5m')
     atr_pct = m5.atr / m5.price if m5.price else 0.0
     setup = build_trade_setup(direction if direction in ('LONG', 'SHORT') else 'FLAT',
@@ -313,9 +313,10 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
                         coin.symbol, signal_type, mtf.alignment)
             signal_type = 'WAIT'
 
-    # rebuild setup if direction became actionable, so entry levels reflect price
+    # rebuild setup once signal_type is known, so SL/TP scale with strength
     if signal_type != 'WAIT' and direction in ('LONG', 'SHORT'):
-        setup = build_trade_setup(direction, m5.price, m5.atr, m5.structure)
+        setup = build_trade_setup(direction, m5.price, m5.atr, m5.structure,
+                                  signal_type=signal_type)
 
     # --- 10. Dedup check (force_wait bypasses) ---
     if not force_wait and not _should_create_signal(coin, signal_type, adjusted, m5.price):
