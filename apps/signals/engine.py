@@ -466,6 +466,11 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
         except Exception:
             logger.exception('notification failed')
         try:
+            from apps.notifications.telegram import send_signal
+            send_signal(signal)
+        except Exception:
+            logger.exception('telegram notification failed')
+        try:
             from apps.paper_trading.services import open_paper_trade
             open_paper_trade(signal)
         except Exception:

@@ -152,6 +152,11 @@ MONITOR_INTERVAL_SECONDS = int(os.getenv('MONITOR_INTERVAL_SECONDS', '30'))
 
 # Paper trading
 PAPER_TRADE_ENABLED = os.getenv('PAPER_TRADE_ENABLED', '1') == '1'
+
+# --- Telegram Bot ---
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
+TELEGRAM_ENABLED = os.getenv('TELEGRAM_ENABLED', '1') == '1'
 PAPER_TRADE_TIMEOUT_FACTOR = 2.0  # close a paper trade after holding_time * factor
 
 # Logging
