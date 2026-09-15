@@ -16,12 +16,16 @@ class TradeSetup:
 
 
 def _strength_scale(signal_type: str) -> tuple:
-    """Return (sl_multiplier, min_rr, label) based on signal strength."""
+    """Return (sl_multiplier, rr_ratio, label) based on signal strength.
+
+    All signal strengths use a 1:2 risk/reward target.
+    The multiplier controls how wide the SL/TP distances are from entry.
+    """
     if signal_type and 'STRONG' in signal_type:
-        return 2.0, 2.0, 'قوی'
+        return 1.2, 2.0, 'قوی'
     if signal_type and 'MEDIUM' in signal_type:
-        return 1.5, 1.75, 'متوسط'
-    return 1.0, 1.5, 'ضعیف'
+        return 0.8, 2.0, 'متوسط'
+    return 0.5, 2.0, 'ضعیف'
 
 
 def build_trade_setup(direction: str, price: float, atr: float,
