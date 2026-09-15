@@ -7,6 +7,7 @@ from apps.learning.services import accuracy_stats
 from apps.market_data.services.data import (get_coin_by_base_asset, get_coins,
                                             get_candles_df, get_price_cache,
                                             get_mtf_bias, get_regime,
+                                            get_regime_direction,
                                             is_connected, try_reconnect)
 from apps.market_data.timeframes import TIMEFRAME_MINUTES
 from apps.notifications.models import Notification
@@ -17,6 +18,7 @@ def _last_signal_payload(coin):
     sig = Signal.objects.filter(coin=coin).first()
     trend = get_mtf_bias(coin.symbol) or (sig.trend if sig else None)
     regime = get_regime(coin.symbol) or (sig.explanation or {}).get('regime_data', {}).get('regime', '') if sig else ''
+    regime_direction = get_regime_direction(coin.symbol) or trend
     if sig is None:
         return None
     return {
@@ -27,6 +29,8 @@ def _last_signal_payload(coin):
         'risk_level': sig.risk_level,
         'direction': sig.direction,
         'trend': trend,
+        'regime': regime,
+        'regime_direction': regime_direction,
         'entry': sig.entry,
         'stop_loss': sig.stop_loss,
         'take_profit': sig.take_profit,
@@ -34,7 +38,6 @@ def _last_signal_payload(coin):
         'holding_time_minutes': sig.holding_time_minutes,
         'status': sig.status,
         'created_at': sig.created_at.isoformat(),
-        'regime': regime,
         'conclusion': (sig.explanation or {}).get('conclusion', ''),
     }
 

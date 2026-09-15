@@ -122,8 +122,12 @@ function applyOverview(data) {
     if (regimeEl && sig) {
       const regimeLabels = { trending: '📈 رونددار', range: '📊 محدوده‌ای',
                              volatile: '⚡ پرنوسان', quiet: '😴 کم‌نوسان' };
+      const dirLabels = { bullish: 'صعودی', bearish: 'نزولی', neutral: 'خنثی' };
       const raw = sig.regime || '';
-      regimeEl.textContent = regimeLabels[raw] || (raw ? raw : '—');
+      const dirRaw = sig.regime_direction || '';
+      const base = regimeLabels[raw] || (raw ? raw : '—');
+      const dirPart = dirRaw && dirRaw !== 'neutral' ? ' ' + (dirLabels[dirRaw] || dirRaw) : '';
+      regimeEl.textContent = base + dirPart;
     }
   });
 }

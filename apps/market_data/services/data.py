@@ -16,6 +16,7 @@ logger = logging.getLogger('crypton.market_data')
 _price_cache = {}
 _mtf_bias_cache = {}
 _regime_cache = {}
+_regime_direction_cache = {}
 _disconnected = False   # True when Binance API is unreachable
 
 
@@ -42,6 +43,14 @@ def set_regime(symbol: str, regime: str):
 
 def get_regime(symbol: str):
     return _regime_cache.get(symbol)
+
+
+def set_regime_direction(symbol: str, direction: str):
+    _regime_direction_cache[symbol] = direction
+
+
+def get_regime_direction(symbol: str):
+    return _regime_direction_cache.get(symbol)
 
 
 def get_coins():

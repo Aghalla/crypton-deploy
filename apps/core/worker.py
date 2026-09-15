@@ -139,16 +139,40 @@ def price_loop(stop: threading.Event):
         stop.wait(settings.PRICE_UPDATE_SECONDS)
 
 
+def _refresh_trend_regime():
+    """Recompute live trend/regime from stored candles for every coin and
+    fill the caches the dashboard reads. Called with each candle sync so the
+    dashboard values stay fresh (not only every 5-minute analysis)."""
+    from apps.analysis.engine.multitf import analyze_multi_timeframe
+    from apps.analysis.engine.regime import detect_regime
+    from apps.market_data.services.data import (
+        get_candles_df, get_coins, set_mtf_bias, set_regime, set_regime_direction)
+    for coin in get_coins():
+        try:
+            dfs = {tf: get_candles_df(coin, tf, limit=400) for tf in ('1h', '30m', '15m', '5m')}
+            if any(df.empty for df in dfs.values()):
+                continue
+            mtf = analyze_multi_timeframe(dfs)
+            regime = detect_regime(dfs['5m'], dfs.get('1h'))
+            set_mtf_bias(coin.symbol, mtf.bias())
+            set_regime(coin.symbol, regime.regime)
+            set_regime_direction(coin.symbol, mtf.bias())
+        except Exception:
+            logger.exception('trend/regime refresh failed for %s', coin.symbol)
+
+
 def candle_loop(stop: threading.Event):
     # initial sync so the dashboard has charts immediately
     try:
         retry_on_db_lock(lambda: update_all_candles(limit=300))
+        _refresh_trend_regime()
     except Exception:
         logger.exception('initial candle sync failed')
     while not stop.is_set():
         stop.wait(settings.CANDLE_UPDATE_SECONDS)
         try:
             retry_on_db_lock(lambda: update_all_candles(limit=60))
+            _refresh_trend_regime()
         except Exception:
             logger.exception('candle loop error')
 

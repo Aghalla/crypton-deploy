@@ -223,9 +223,10 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
     # --- 2. Multi-timeframe analysis ---
     mtf = analyze_multi_timeframe(dfs)
     # Always publish the freshest trend/regime so the dashboard is live
-    from apps.market_data.services.data import set_mtf_bias, set_regime
+    from apps.market_data.services.data import set_mtf_bias, set_regime, set_regime_direction
     set_mtf_bias(coin.symbol, mtf.bias())
     set_regime(coin.symbol, regime.regime)
+    set_regime_direction(coin.symbol, mtf.bias())
     # keep regime direction consistent with the multi-timeframe view
     regime.direction = mtf.bias()
 
