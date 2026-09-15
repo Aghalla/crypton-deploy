@@ -10,10 +10,13 @@ class CoreConfig(AppConfig):
         import os
         import sys
         from django.conf import settings
-        # Django autoreload creates two processes; only the reloader child
-        # (RUN_MAIN=true) should start the worker to avoid duplicates.
         if 'runserver' in sys.argv and settings.WORKER_AUTOSTART:
-            if os.environ.get('RUN_MAIN') != 'true':
+            # Standard Django autoreload: only the child process (RUN_MAIN=true)
+            # should start workers.  But when --noreload is used there is only
+            # one process and RUN_MAIN is never set — allow it in that case.
+            noreload = '--noreload' in sys.argv
+            run_main = os.environ.get('RUN_MAIN') == 'true'
+            if not noreload and not run_main:
                 return
             import atexit
             import threading
