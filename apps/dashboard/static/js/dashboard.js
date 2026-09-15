@@ -132,3 +132,29 @@ document.addEventListener('DOMContentLoaded', () => {
   fetch('/api/overview/').then(r => r.json()).then(applyOverview).catch(() => {});
   connectDashboard();
 });
+
+async function tryReconnect(btn) {
+  const status = document.getElementById('reconnect-status');
+  btn.disabled = true;
+  btn.textContent = 'در حال تلاش...';
+  if (status) status.textContent = '';
+  try {
+    const res = await fetch('/api/reconnect/', { method: 'POST' });
+    const data = await res.json();
+    if (data.connected) {
+      if (status) { status.textContent = '✅ وصل شد!'; status.style.color = '#10b981'; }
+      btn.textContent = 'وصل شد';
+      // refresh data
+      fetch('/api/overview/').then(r => r.json()).then(applyOverview);
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      if (status) { status.textContent = '❌ هنوز قطع است'; status.style.color = '#f43f5e'; }
+      btn.textContent = 'تلاش مجدد';
+      btn.disabled = false;
+    }
+  } catch (e) {
+    if (status) { status.textContent = '❌ خطا در اتصال'; status.style.color = '#f43f5e'; }
+    btn.textContent = 'تلاش مجدد';
+    btn.disabled = false;
+  }
+}

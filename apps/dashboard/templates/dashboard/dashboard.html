@@ -1,5 +1,15 @@
 {% extends 'dashboard/base.html' %}
 {% block content %}
+
+{% if not connected %}
+<div id="disconnected-banner" class="glass" style="margin-bottom:18px;border:1px solid #f43f5e;text-align:center;">
+  <p style="color:#f43f5e;font-weight:700;margin-bottom:6px;">⚠️ سرور بازار (Binance) وصل نیست</p>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:10px;">قیمت‌ها و تحلیل‌ها به‌روز نیستند تا اتصال برقرار شود.</p>
+  <button onclick="tryReconnect(this)" style="padding:8px 24px;border-radius:10px;border:none;background:var(--purple);color:#fff;cursor:pointer;font-family:inherit;font-size:.9rem;">تلاش مجدد</button>
+  <span id="reconnect-status" style="margin-right:10px;font-size:.85rem;color:var(--muted);"></span>
+</div>
+{% endif %}
+
 <header class="topbar glass">
   <div class="brand" style="display:flex;align-items:center;">
     <div class="logo">🪙</div>
@@ -44,10 +54,10 @@
 </div>
 
 <footer class="glass" style="margin-top:24px;text-align:center;padding:14px;font-size:.85rem;color:var(--muted);">
-  {% if demo_mode %}
-    ⚠️ حالت دمو — قیمت‌ها ساختگی هستند و از بازار واقعی گرفته نمی‌شوند
-  {% else %}
+  {% if connected %}
     قیمت‌ها واقعی هستند — منبع: Binance
+  {% else %}
+    ⚠️ سرور بازار (Binance) وصل نیست — قیمت‌ها و تحلیل‌ها به‌روز نیستند
   {% endif %}
 </footer>
 {% endblock %}

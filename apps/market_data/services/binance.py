@@ -146,12 +146,8 @@ _binance_client = None
 
 
 def get_market_client():
-    """Return the configured market client (demo fallback on connection errors)."""
+    """Always return the Binance client. No demo fallback."""
     global _binance_client
-    if settings.DEMO_MODE:
-        return DemoMarketClient()
     if _binance_client is None:
         _binance_client = BinanceClient()
-    if _binance_client._blocked:
-        return DemoMarketClient()
     return _binance_client

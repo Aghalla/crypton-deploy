@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from apps.learning.services import accuracy_stats
 from apps.market_data.services.data import (get_coin_by_base_asset, get_coins,
                                             get_candles_df, get_price_cache,
-                                            get_mtf_bias, get_regime)
+                                            get_mtf_bias, get_regime,
+                                            is_connected, try_reconnect)
 from apps.market_data.timeframes import TIMEFRAME_MINUTES
 from apps.notifications.models import Notification
 from apps.signals.models import SIGNAL_LABELS, Signal, StrategyPerformance
@@ -64,9 +65,17 @@ def build_overview() -> dict:
     last_analysis = Signal.objects.first()
     return {
         'now': timezone.now().isoformat(),
+        'connected': is_connected(),
         'last_analysis_at': last_analysis.created_at.isoformat() if last_analysis else None,
         'coins': items,
     }
+
+
+@api_view(['POST'])
+def reconnect(request):
+    """Try to ping Binance and reconnect. Returns {ok: bool, connected: bool}."""
+    ok = try_reconnect()
+    return Response({'ok': ok, 'connected': is_connected()})
 
 
 @api_view(['GET'])

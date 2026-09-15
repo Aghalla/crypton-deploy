@@ -162,9 +162,13 @@ def _is_5m_boundary() -> bool:
 
 
 def analysis_loop(stop: threading.Event):
+    from apps.market_data.services.data import is_connected
     while not stop.is_set():
         started = time.time()
         try:
+            if not is_connected():
+                stop.wait(60)
+                continue
             retry_on_db_lock(expire_stale_signals)
             from apps.paper_trading.services import monitor_paper_trades
             for coin in get_coins():

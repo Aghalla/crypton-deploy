@@ -7,19 +7,25 @@ import pandas as pd
 from django.conf import settings
 
 from apps.market_data.models import Candle, Coin
-from apps.market_data.services.binance import DemoMarketClient, BinanceClient, get_market_client
+from apps.market_data.services.binance import BinanceClient, get_market_client
 from apps.market_data.timeframes import ALL_TIMEFRAMES
 
 logger = logging.getLogger('crypton.market_data')
 
 # In-memory price cache: {symbol: {'price': float, 'change': float, 'updated_at': datetime}}
 _price_cache = {}
-# Latest multi-timeframe bias per symbol ('bullish'/'bearish'/'neutral'),
-# refreshed by every analysis cycle — fresher than the stored signal's trend
 _mtf_bias_cache = {}
-# Latest regime string per symbol ('trending'/'range'/'volatile'/'quiet'),
-# refreshed by every analysis cycle for the dashboard
 _regime_cache = {}
+_disconnected = False   # True when Binance API is unreachable
+
+
+def is_connected():
+    return not _disconnected
+
+
+def set_connected(val: bool):
+    global _disconnected
+    _disconnected = not val
 
 
 def set_mtf_bias(symbol: str, bias: str):
@@ -48,14 +54,15 @@ def get_coin_by_base_asset(base_asset: str):
 
 def update_prices():
     """Refresh prices in memory only (no database writes)."""
-    global _price_cache
+    global _price_cache, _disconnected
     client = get_market_client()
     try:
         prices = client.get_ticker_prices()
     except Exception:
-        logger.exception('failed to fetch ticker prices; falling back to demo client')
-        client = DemoMarketClient()
-        prices = client.get_ticker_prices()
+        logger.warning('failed to fetch ticker prices — Binance unreachable')
+        _disconnected = True
+        return {}
+    _disconnected = False
     now = datetime.now(timezone.utc)
     for coin in get_coins():
         price = prices.get(coin.symbol)
@@ -78,6 +85,24 @@ def update_prices():
 def get_price_cache():
     """Return the in-memory price cache."""
     return _price_cache
+
+
+def try_reconnect():
+    """Ping Binance; if reachable, fetch prices+candles and return True."""
+    global _disconnected
+    client = get_market_client()
+    try:
+        client.ping()
+    except Exception:
+        return False
+    # success — mark connected and refresh everything
+    _disconnected = False
+    try:
+        update_prices()
+        update_all_candles(limit=300)
+    except Exception:
+        pass
+    return True
 
 
 def update_candles(coin: Coin, timeframe: str, limit: int = 300):

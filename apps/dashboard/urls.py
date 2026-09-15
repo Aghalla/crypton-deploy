@@ -12,4 +12,5 @@ urlpatterns = [
          api.candles, name='api-candles'),
     path('api/performance/', api.performance, name='api-performance'),
     path('api/notifications/', api.notifications, name='api-notifications'),
+    path('api/reconnect/', api.reconnect, name='api-reconnect'),
 ]
