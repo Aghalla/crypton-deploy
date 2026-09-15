@@ -211,12 +211,31 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
     force_wait: when True (e.g. after SL/TP close), always produce a WAIT signal
                 and skip dedup so the user sees the situation has changed.
     """
+    # --- 0a. Never analyse when market data is unavailable ---
+    from apps.market_data.services.data import is_connected
+    if not is_connected():
+        return None
+
+    # --- 0b. Load candles; drop the still-forming bar (only CLOSED candles are valid) ---
+    from apps.market_data.timeframes import TIMEFRAME_MINUTES
+    from django.utils import timezone as _tz
     dfs = {}
     for tf in ('1h', '30m', '15m', '5m'):
-        dfs[tf] = get_candles_df(coin, tf, limit=400)
-        if dfs[tf].empty:
+        raw = get_candles_df(coin, tf, limit=400)
+        if raw.empty:
             logger.warning('no candles for %s %s — skipping analysis', coin.symbol, tf)
             return None
+        # A candle whose open_time falls within the current partial bar
+        # is not yet closed and must not be used for analysis.
+        tf_min = TIMEFRAME_MINUTES.get(tf, 5)
+        now_utc = _tz.now().replace(second=0, microsecond=0)
+        current_bar_start = now_utc.replace(minute=(now_utc.minute // tf_min) * tf_min)
+        if raw.index[-1] >= current_bar_start:
+            raw = raw.iloc[:-1]
+        if raw.empty:
+            logger.warning('no closed candles for %s %s', coin.symbol, tf)
+            return None
+        dfs[tf] = raw
 
     # --- 1. Market Regime Detection ---
     regime = detect_regime(dfs['5m'], dfs.get('1h'))
@@ -273,7 +292,7 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
             regime_bonus = 2        # good match
     adjusted = max(0.0, min(100.0, adjusted + regime_bonus))
 
-    # --- 7c. Staleness penalty: data older than 10 minutes hurts confidence ---
+    # --- 7c. Staleness: data older than 10 minutes is a hard WAIT ---
     try:
         from django.utils import timezone as _tz
         last_bar_time = dfs['5m'].index[-1]
@@ -283,9 +302,13 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
             last_bar_tz = last_bar_time
         data_age_sec = (_tz.now() - last_bar_tz).total_seconds()
         if data_age_sec > 600:
-            penalty = min(15, (data_age_sec - 600) / 120)   # up to 15 pts
-            adjusted = max(0.0, adjusted - penalty)
-            confidence.negatives.append(f'داده‌ها {int(data_age_sec/60)} دقیقه کهنه هستند')
+            signal_type = 'WAIT' if not force_wait else 'WAIT'
+            direction = 'FLAT'
+            confidence.negatives.append(
+                f'داده‌ها {int(data_age_sec/60)} دقیقه کهنه هستند — سیگنال صبر')
+            return None   # abort signal generation entirely
+    except Exception:
+        pass
     except Exception:
         pass
 

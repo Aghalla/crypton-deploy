@@ -12,6 +12,14 @@ class TrendFollowingStrategy(BaseStrategy):
         m30 = mtf.snapshot('30m')
         m5 = mtf.snapshot('5m')
 
+        # If overall multi-timeframe alignment is neutral, Trend Following
+        # cannot determine a valid direction → no BUY/SELL.
+        if mtf.bias() == 'neutral':
+            res.signal = 'WAIT'
+            res.strength = 0
+            res.explanation_fa = 'روند مشخصی شناسایی نشد — بازار خنثی است'
+            return res
+
         score = 0.0
         notes = []
         # main trend (1h) carries the most weight

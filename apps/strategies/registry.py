@@ -44,34 +44,55 @@ def run_all_strategies(mtf, df_5m=None, regime_weights=None) -> list[StrategyRes
 
 def select_best_strategy(regime, strategy_results) -> tuple:
     """
-    Select exactly ONE strategy whose setup matches the current regime.
+    Select exactly ONE strategy: the strongest eligible candidate whose
+    setup matches the current market regime.
 
     Returns (best_result, reason_fa) — best_result is None when nothing
     clearly matches (caller must produce WAIT).
     """
     by_name = {r.name: r for r in strategy_results}
     regime_name = getattr(regime, 'regime', 'quiet')
-    preferred = REGIME_STRATEGY_MATCH.get(regime_name, ['trend_following'])
+    preferred = REGIME_STRATEGY_MATCH.get(regime_name, [])
 
+    # Collect eligible candidates: must be in the preferred list, have a
+    # BUY or SELL signal, and exceed the minimum strength threshold.
+    candidates = []
     for name in preferred:
         result = by_name.get(name)
         if result is None:
             continue
         if result.signal in ('BUY', 'SELL') and result.strength >= MIN_SELECTED_STRENGTH:
-            reason = (
-                f'بازار {regime_name} است و استراتژی {result.name_fa} '
-                f'با قدرت {result.strength:.0f}٪ بهترین تطابق با شرایط فعلی دارد.'
-            )
-            return result, reason
+            candidates.append(result)
 
-    # nothing in the preferred list fired strongly enough
-    active = [r for r in strategy_results if r.signal in ('BUY', 'SELL')]
-    if active:
-        names = '، '.join(f'{r.name_fa} ({r.strength:.0f}٪)' for r in active)
+    if not candidates:
+        active = [r for r in strategy_results if r.signal in ('BUY', 'SELL')]
+        if active:
+            names = '، '.join(f'{r.name_fa} ({r.strength:.0f}٪)' for r in active)
+            reason = (
+                f'استراتژی‌های فعال ({names}) با رژیم {regime_name} '
+                f'تطابق کافی ندارند؛ هیچ استراتژی مناسبی برای ورود وجود ندارد.'
+            )
+        else:
+            reason = f'هیچ استراتژی‌ای سیگنال فعال نداده است (رژیم: {regime_name}).'
+        return None, reason
+
+    # Pick the STRONGEST candidate.
+    candidates.sort(key=lambda r: r.strength, reverse=True)
+    best = candidates[0]
+
+    # If the top two are extremely close (within 5 pts) prefer WAIT rather
+    # than forcing a choice the system cannot confidently make.
+    if len(candidates) >= 2 and (candidates[0].strength - candidates[1].strength) < 5.0:
+        names = (f'{candidates[0].name_fa} ({candidates[0].strength:.0f}٪) و '
+                 f'{candidates[1].name_fa} ({candidates[1].strength:.0f}٪)')
         reason = (
-            f'استراتژی‌های فعال ({names}) با رژیم {regime_name} تطابق کافی ندارند؛ '
-            f'هیچ استراتژی مناسبی برای ورود وجود ندارد.'
+            f'دو استراتژی {names} تقریباً هم‌سطح هستند و تفکیک دقیق ممکن نیست؛ '
+            f'صبر منطقی‌تر است.'
         )
-    else:
-        reason = f'هیچ استراتژی‌ای سیگنال فعال نداده است (رژیم: {regime_name}).'
-    return None, reason
+        return None, reason
+
+    reason = (
+        f'بازار {regime_name} است و استراتژی {best.name_fa} '
+        f'با قدرت {best.strength:.0f}٪ بهترین تطابق با شرایط فعلی دارد.'
+    )
+    return best, reason
