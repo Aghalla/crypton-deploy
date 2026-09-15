@@ -23,8 +23,7 @@ from apps.signals.confidence import (ConfidenceResult, compute_confidence,
 from apps.signals.explanation import generate_explanation
 from apps.signals.models import SIGNAL_LABELS, Signal, StrategyPerformance
 from apps.signals.trade_setup import build_trade_setup
-from apps.strategies.registry import run_all_strategies
-from apps.strategies.registry import run_all_strategies
+from apps.strategies.registry import run_all_strategies, select_best_strategy
 
 logger = logging.getLogger('crypton.signals')
 
@@ -234,8 +233,12 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
     strategy_results = run_all_strategies(mtf, df_5m=dfs['5m'],
                                            regime_weights=regime.strategy_weights)
 
-    # --- 4. Direction from strategy votes ---
-    direction = _direction_hint(strategy_results)
+    # --- 4. Select ONE strategy that best matches the regime ---
+    best_strategy, selection_reason = select_best_strategy(regime, strategy_results)
+    if best_strategy is not None:
+        direction = 'LONG' if best_strategy.signal == 'BUY' else 'SHORT'
+    else:
+        direction = 'FLAT'
 
     # --- 5. Confidence score ---
     confidence = compute_confidence(mtf, strategy_results, direction)
@@ -257,6 +260,33 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
     except Exception:
         logger.exception('ML prediction failed for %s', coin.symbol)
     adjusted = max(0.0, min(100.0, confidence.score + adjustment))
+
+    # --- 7b. Regime-match bonus: reward when selected strategy fits the regime ---
+    regime_bonus = 0
+    if best_strategy and direction in ('LONG', 'SHORT'):
+        from apps.strategies.registry import REGIME_STRATEGY_MATCH
+        preferred = REGIME_STRATEGY_MATCH.get(regime.regime, [])
+        if best_strategy.name in preferred[:1]:
+            regime_bonus = 5        # best match for this regime
+        elif best_strategy.name in preferred[:2]:
+            regime_bonus = 2        # good match
+    adjusted = max(0.0, min(100.0, adjusted + regime_bonus))
+
+    # --- 7c. Staleness penalty: data older than 10 minutes hurts confidence ---
+    try:
+        from django.utils import timezone as _tz
+        last_bar_time = dfs['5m'].index[-1]
+        if hasattr(last_bar_time, 'tzinfo') and last_bar_time.tzinfo is None:
+            last_bar_tz = last_bar_time.replace(tzinfo=_tz.utc)
+        else:
+            last_bar_tz = last_bar_time
+        data_age_sec = (_tz.now() - last_bar_tz).total_seconds()
+        if data_age_sec > 600:
+            penalty = min(15, (data_age_sec - 600) / 120)   # up to 15 pts
+            adjusted = max(0.0, adjusted - penalty)
+            confidence.negatives.append(f'داده‌ها {int(data_age_sec/60)} دقیقه کهنه هستند')
+    except Exception:
+        pass
 
     # --- 8. Signal type ---
     if force_wait:
@@ -324,12 +354,16 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
     strat_snapshot = [r.to_dict() for r in strategy_results]
     for s in strat_snapshot:
         s['regime_weight'] = regime.strategy_weights.get(s['name'], 1.0)
+        if best_strategy and s['name'] == best_strategy.name:
+            s['selected'] = True
 
     # --- 14. Build full explanation dict (audit trail) ---
     dir_fa = 'خرید' if direction == 'LONG' else 'فروش' if direction == 'SHORT' else 'صبر'
+    strat_info = f'استراتژی انتخابی: {best_strategy.name_fa}' if best_strategy else 'هیچ استراتژی مناسبی انتخاب نشد'
     if signal_type != 'WAIT':
         narrative = (
-            f'{mtf.summary_fa} {confidence.narrative_fa} '
+            f'{mtf.summary_fa} {strat_info}. {selection_reason} '
+            f'{confidence.narrative_fa} '
             f'مدل یادگیری ماشین امتیاز را {adjustment:+.1f} تعدیل کرد. '
             f'نتیجه نهایی: {SIGNAL_LABELS[signal_type]}.'
         )
@@ -337,18 +371,20 @@ def analyze_coin(coin: Coin, force_wait: bool = False) -> Signal | None:
         narrative = explanation.reason_fa
     else:
         narrative = (
-            f'{mtf.summary_fa} {confidence.narrative_fa} '
+            f'{mtf.summary_fa} {strat_info}. {selection_reason} '
+            f'{confidence.narrative_fa} '
             f'شرایط برای {dir_fa} فراهم نیست؛ سیگنال صبر.'
         )
 
     full_explanation = {
         'narrative': narrative,
         'reason': explanation.reason_fa,
+        'selection_reason': selection_reason,
         'positives': explanation.positives,
         'negatives': explanation.negatives,
         'risks': explanation.risks,
         'confidence_reason': explanation.confidence_reason_fa,
-        'best_strategy': explanation.best_strategy_fa,
+        'best_strategy': best_strategy.name_fa if best_strategy else None,
         'regime': explanation.regime_fa,
         'conclusion': explanation.conclusion_fa,
         'trade_setup': setup.explanation_fa,

@@ -14,18 +14,24 @@ class ExplanationResult:
     risks: list = field(default_factory=list)
     confidence_reason_fa: str = ''
     best_strategy_fa: str = ''
+    selection_reason_fa: str = ''
+    rejected_strategies_fa: list = field(default_factory=list)
     regime_fa: str = ''
+    invalidation_fa: str = ''
     conclusion_fa: str = ''
 
     def to_dict(self):
         return {
             'reason': self.reason_fa,
+            'selection_reason': self.selection_reason_fa,
+            'rejected_strategies': self.rejected_strategies_fa,
             'positives': self.positives,
             'negatives': self.negatives,
             'risks': self.risks,
             'confidence_reason': self.confidence_reason_fa,
             'best_strategy': self.best_strategy_fa,
             'regime': self.regime_fa,
+            'invalidation': self.invalidation_fa,
             'conclusion': self.conclusion_fa,
         }
 
@@ -65,23 +71,32 @@ def generate_explanation(mtf, strategy_results, confidence, regime,
     else:
         exp.negatives.append('هم‌راستایی تایم‌فریم‌ها ضعیف است')
 
-    # --- Strategy results ---
-    buy_strategies = [r for r in strategy_results if r.signal == 'BUY']
-    sell_strategies = [r for r in strategy_results if r.signal == 'SELL']
+    # --- Strategy results: which were selected vs rejected ---
     active = [r for r in strategy_results if r.signal in ('BUY', 'SELL')]
-
-    if buy_strategies:
-        names = '، '.join(r.name_fa for r in buy_strategies)
-        exp.positives.append(f'{len(buy_strategies)} استراتژی خرید فعال: {names}')
-    if sell_strategies:
-        names = '، '.join(r.name_fa for r in sell_strategies)
-        exp.negatives.append(f'{len(sell_strategies)} استراتژی فروش فعال: {names}')
-
-    # best strategy
+    # best strategy from the caller (set externally or from max strength)
     if strategy_results:
         best = max(strategy_results, key=lambda r: r.strength if r.signal != 'WAIT' else 0)
         if best.signal != 'WAIT':
             exp.best_strategy_fa = f'{best.name_fa} (قدرت {best.strength:.0f}٪)'
+    # rejected strategies: those that fired but were not selected
+    rejected = [r for r in active if r.name != (best.name if best else '')]
+    if rejected:
+        exp.rejected_strategies_fa = [
+            f'{r.name_fa}: سیگنال {r.signal} با قدرت {r.strength:.0f}٪ '
+            f'(تطابق کافی با شرایط بازار نداشت)'
+            for r in rejected
+        ]
+
+    # --- Invalidation conditions ---
+    invalidations = []
+    if confidence and confidence.score < 45:
+        invalidations.append('امتیاز اعتماد پایین‌تر از حد نصاب است')
+    if atr_pct and atr_pct > 0.025:
+        invalidations.append('نوسان بازار بسیار بالاست — احتمال خروج از حد ضرر')
+    if not active:
+        invalidations.append('هیچ استراتژی‌ای سیگنال فعال نداده')
+    if invalidations:
+        exp.invalidation_fa = 'شرایط بطلان: ' + ' | '.join(invalidations)
 
     # --- Volume ---
     if m5.vol_ratio >= 1.2:
