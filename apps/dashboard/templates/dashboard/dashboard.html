@@ -1,0 +1,53 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<header class="topbar glass">
+  <div class="brand" style="display:flex;align-items:center;">
+    <div class="logo">🪙</div>
+    <div>
+      <h1>دستیار هوشمند معاملات ارز دیجیتال</h1>
+      <div class="sub"><span class="live-dot"></span>تحلیل زنده ۵ تایم‌فریم با هوش مصنوعی داخلی — تایم‌فریم اصلی: ۵ دقیقه</div>
+    </div>
+  </div>
+  <div class="clock">
+    <div>الان: <b id="server-now">—</b></div>
+    <div>تاریخ: <b id="server-date">—</b></div>
+    <div>آخرین تحلیل: <b id="last-analysis">—</b></div>
+  </div>
+</header>
+
+<div class="grid">
+  {% for coin in coins %}
+  <a class="glass coin-card" href="{% url 'coin_page' coin.base_asset %}">
+    <div class="coin-head">
+      <div>
+        <div class="coin-name">{{ coin.name }}</div>
+        <div class="coin-symbol">{{ coin.base_asset }}/{{ coin.quote_asset }}</div>
+      </div>
+      <span class="signal-badge sig-wait" id="signal-{{ coin.base_asset }}">در حال تحلیل…</span>
+    </div>
+    <div class="coin-price" id="price-{{ coin.base_asset }}">—</div>
+    <div class="coin-change up" id="change-{{ coin.base_asset }}"></div>
+    <div class="conf-bar"><div class="conf-fill" id="confbar-{{ coin.base_asset }}" style="width:0%"></div></div>
+    <div class="meta-row">
+      <span>اعتماد AI: <b id="conf-{{ coin.base_asset }}">—</b></span>
+      <span>ریسک: <b id="risk-{{ coin.base_asset }}" class="risk-medium">—</b></span>
+    </div>
+    <div class="meta-row">
+      <span>رونده: <b id="trend-{{ coin.base_asset }}" class="trend-unknown">—</b></span>
+      <span>بازار: <b id="regime-{{ coin.base_asset }}">—</b></span>
+    </div>
+    <div class="meta-row">
+      <span>آخرین به‌روزرسانی قیمت: <b id="updated-{{ coin.base_asset }}">—</b></span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<footer class="glass" style="margin-top:24px;text-align:center;padding:14px;font-size:.85rem;color:var(--muted);">
+  {% if demo_mode %}
+    ⚠️ حالت دمو — قیمت‌ها ساختگی هستند و از بازار واقعی گرفته نمی‌شوند
+  {% else %}
+    قیمت‌ها واقعی هستند — منبع: Binance
+  {% endif %}
+</footer>
+{% endblock %}

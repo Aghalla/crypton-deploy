@@ -1,0 +1,27 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="asgiref" />
+          <option value="Django" />
+          <option value="django-debug-toolbar" />
+          <option value="django-jalali" />
+          <option value="django-taggit" />
+          <option value="easy-thumbnails" />
+          <option value="jalali_core" />
+          <option value="jdatetime" />
+          <option value="persiantools" />
+          <option value="pillow" />
+          <option value="psycopg2-binary" />
+          <option value="python-slugify" />
+          <option value="sqlparse" />
+          <option value="text-unidecode" />
+          <option value="tzdata" />
+          <option value="Unidecode" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

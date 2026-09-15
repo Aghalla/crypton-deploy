@@ -1,0 +1,129 @@
+/* Crypto AI Trading Assistant — dark purple glassmorphism, RTL */
+:root {
+  --bg: #0d0817;
+  --bg2: #140c24;
+  --card: rgba(139, 92, 246, 0.08);
+  --card-border: rgba(139, 92, 246, 0.22);
+  --text: #ede9fe;
+  --muted: #a78bfa;
+  --purple: #8b5cf6;
+  --purple-strong: #7c3aed;
+  --buy: #10b981;
+  --sell: #f43f5e;
+  --wait: #f59e0b;
+  --low: #10b981;
+  --medium: #f59e0b;
+  --high: #f43f5e;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Vazirmatn, Tahoma, sans-serif;
+  background: radial-gradient(1200px 800px at 80% -10%, #2a1155 0%, var(--bg) 55%);
+  color: var(--text);
+  min-height: 100vh;
+  direction: rtl;
+}
+
+.container { max-width: 1280px; margin: 0 auto; padding: 24px 20px 60px; }
+
+/* glass card */
+.glass {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  padding: 20px;
+  animation: rise 0.4s ease;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: none;} }
+
+/* header */
+.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; }
+.brand h1 { font-size: 1.5rem; font-weight: 800; }
+.brand .sub { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+.clock { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); }
+.clock b { color: var(--text); font-weight: 600; }
+.logo {
+  width: 44px; height: 44px; border-radius: 14px; display: inline-flex; align-items: center;
+  justify-content: center; font-size: 1.3rem; margin-left: 12px;
+  background: linear-gradient(135deg, var(--purple), var(--purple-strong));
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.45);
+}
+
+/* coin grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+.coin-card { text-decoration: none; color: inherit; display: block; transition: transform .18s ease, border-color .18s ease; }
+.coin-card:hover { transform: translateY(-4px); border-color: rgba(139, 92, 246, 0.55); }
+
+.coin-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.coin-name { font-weight: 700; font-size: 1.05rem; }
+.coin-symbol { color: var(--muted); font-size: 0.8rem; }
+.coin-price { font-size: 1.45rem; font-weight: 800; letter-spacing: .5px; direction: ltr; text-align: right; }
+.coin-change { font-size: .85rem; direction: ltr; }
+.up { color: var(--buy); } .down { color: var(--sell); }
+
+.signal-badge {
+  display: inline-block; padding: 5px 14px; border-radius: 999px; font-size: .85rem; font-weight: 700;
+}
+.sig-buy { background: rgba(16,185,129,.15); color: var(--buy); border: 1px solid rgba(16,185,129,.4); }
+.sig-sell { background: rgba(244,63,94,.15); color: var(--sell); border: 1px solid rgba(244,63,94,.4); }
+.sig-wait { background: rgba(245,158,11,.13); color: var(--wait); border: 1px solid rgba(245,158,11,.4); }
+
+.meta-row { display: flex; justify-content: space-between; font-size: .82rem; color: var(--muted); margin-top: 8px; }
+.conf-bar { height: 7px; border-radius: 6px; background: rgba(255,255,255,.07); overflow: hidden; margin: 12px 0 4px; }
+.conf-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #c084fc); border-radius: 6px; transition: width .6s ease; }
+
+.risk-low { color: var(--low); } .risk-medium { color: var(--medium); } .risk-high { color: var(--high); }
+.trend-up { color: #10b981; } .trend-down { color: #f43f5e; } .trend-sideways { color: #f59e0b; } .trend-unknown { color: var(--muted); }
+
+/* coin page */
+.coin-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+@media (max-width: 980px) { .coin-layout { grid-template-columns: 1fr; } }
+.section-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title::before { content: ''; width: 4px; height: 18px; border-radius: 2px; background: var(--purple); }
+
+#chart { width: 100%; height: 420px; border-radius: 12px; overflow: hidden; }
+.tf-switch { display: flex; gap: 8px; margin-bottom: 12px; }
+.tf-btn {
+  padding: 6px 16px; border-radius: 10px; border: 1px solid var(--card-border);
+  background: transparent; color: var(--muted); cursor: pointer; font-family: inherit; font-size: .85rem;
+  transition: all .15s ease;
+}
+.tf-btn.active, .tf-btn:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+.list-fa { list-style: none; }
+.list-fa li { padding: 7px 0; font-size: .9rem; line-height: 1.7; border-bottom: 1px dashed rgba(139,92,246,.15); }
+.list-fa li:last-child { border-bottom: none; }
+.list-fa.pos li::before { content: '✓ '; color: var(--buy); font-weight: 800; }
+.list-fa.neg li::before { content: '✗ '; color: var(--sell); font-weight: 800; }
+.list-fa.risk li::before { content: '⚠ '; color: var(--wait); }
+
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th, td { padding: 9px 8px; text-align: right; border-bottom: 1px solid rgba(139,92,246,.12); }
+th { color: var(--muted); font-weight: 600; }
+
+.stat-chips { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.chip { padding: 10px 16px; border-radius: 12px; background: rgba(139,92,246,.1); border: 1px solid var(--card-border); }
+.chip .k { font-size: .75rem; color: var(--muted); }
+.chip .v { font-size: 1.05rem; font-weight: 700; margin-top: 3px; }
+
+.narrative { font-size: .93rem; line-height: 1.9; color: var(--text); }
+
+.back-link { color: var(--muted); text-decoration: none; font-size: .9rem; display: inline-block; margin-bottom: 14px; }
+.back-link:hover { color: var(--purple); }
+
+/* notifications */
+.notif-panel { position: fixed; bottom: 20px; left: 20px; z-index: 50; display: flex; flex-direction: column; gap: 10px; max-width: 340px; }
+.toast {
+  padding: 14px 16px; border-radius: 14px; background: rgba(20, 12, 36, .92);
+  border: 1px solid var(--card-border); backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: rise .3s ease; font-size: .85rem;
+}
+.toast b { display: block; margin-bottom: 4px; }
+
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--buy); margin-left: 6px; animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1;} 50% { opacity: .35;} }

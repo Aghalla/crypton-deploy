@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}دستیار هوشمند معاملات ارز دیجیتال{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
+  {% block extra_head %}{% endblock %}
+</head>
+<body {% block body_attrs %}{% endblock %}>
+<div class="container">
+  {% block content %}{% endblock %}
+</div>
+<div class="notif-panel" id="notif-panel"></div>
+<script src="{% static 'js/dashboard.js' %}?v=5"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

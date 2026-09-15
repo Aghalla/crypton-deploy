@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="StructuredTemplatesSettings">
+    <option name="templates">
+      <list>
+        <TemplateState>
+          <option name="name" value="Component" />
+          <option name="iconPath" value="AllIcons.Nodes.ModuleGroup" />
+          <option name="entries">
+            <list>
+              <EntryState>
+                <option name="name" value="component" />
+                <option name="type" value="FILE" />
+                <option name="fileTemplateName" value="JavaScript File" />
+                <option name="extension" value="js" />
+              </EntryState>
+              <EntryState>
+                <option name="name" value="style" />
+                <option name="type" value="FILE" />
+                <option name="fileTemplateName" value="CSS File" />
+                <option name="extension" value="css" />
+              </EntryState>
+            </list>
+          </option>
+        </TemplateState>
+      </list>
+    </option>
+  </component>
+</project>

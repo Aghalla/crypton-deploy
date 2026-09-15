@@ -1,0 +1,1 @@
+ادامه پیاده‌سازی طبق برنامه تأییدشده: اپ market_data (کلاینت Binance/دمو، مدل‌ها)، موتور تحلیل، استراتژی‌ها، سیگنال‌ها، یادگیری AI، Paper Trading، Worker/WebSocket/API و UI فارسی RTL در E:\code\ai\zcode\crypton.

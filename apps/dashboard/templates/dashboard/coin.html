@@ -1,0 +1,95 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}{{ coin.name }} — تحلیل هوشمند{% endblock %}
+{% block body_attrs %}data-coin="{{ coin.base_asset|lower }}"{% endblock %}
+{% block extra_head %}
+<script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+{% endblock %}
+{% block content %}
+<a href="/" class="back-link">→ بازگشت به داشبورد</a>
+
+<header class="glass topbar">
+  <div class="brand" style="display:flex;align-items:center;">
+    <div class="logo">{{ coin.base_asset|slice:":2" }}</div>
+    <div>
+      <h1>{{ coin.name }} <span class="coin-symbol">({{ coin.base_asset }}/{{ coin.quote_asset }})</span></h1>
+      <div class="sub">تحلیل کوتاه‌مدت بر پایه تایم‌فریم ۵ دقیقه</div>
+    </div>
+  </div>
+  <div class="clock">
+    <div>قیمت فعلی: <b id="coin-price" style="direction:ltr">—</b></div>
+    <div>آخرین به‌روزرسانی: <b id="coin-updated">—</b></div>
+    <div>سیگنال: <span class="signal-badge sig-wait" id="current-signal">در حال تحلیل…</span></div>
+  </div>
+</header>
+
+<div class="coin-layout">
+  <div>
+    <section class="glass" style="margin-bottom:18px;">
+      <div class="section-title">نمودار معاملات</div>
+      <div class="tf-switch">
+        <button class="tf-btn" data-tf="1h">۱ ساعت</button>
+        <button class="tf-btn" data-tf="30m">۳۰ دقیقه</button>
+        <button class="tf-btn" data-tf="15m">۱۵ دقیقه</button>
+        <button class="tf-btn active" data-tf="5m">۵ دقیقه</button>
+      </div>
+      <div id="chart"></div>
+    </section>
+
+    <section class="glass" style="margin-bottom:18px;">
+      <div class="section-title">توضیح تصمیم هوش مصنوعی</div>
+      <p class="narrative" id="ai-narrative">در انتظار اولین تحلیل…</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px;">
+        <div><b class="up">عوامل مثبت</b><ul class="list-fa pos" id="pos-list"></ul></div>
+        <div><b class="down">عوامل منفی</b><ul class="list-fa neg" id="neg-list"></ul></div>
+        <div><b style="color:var(--wait)">ریسک‌ها</b><ul class="list-fa risk" id="risk-list"></ul></div>
+      </div>
+    </section>
+
+    <section class="glass">
+      <div class="section-title">تاریخچه سیگنال‌ها</div>
+      <table>
+        <thead>
+          <tr><th>زمان</th><th>سیگنال</th><th>اعتماد</th><th>نتیجه</th><th>سود/زیان</th></tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <div>
+    <section class="glass" style="margin-bottom:18px;">
+      <div class="section-title">عملکرد هوش مصنوعی</div>
+      <div class="stat-chips">
+        <div class="chip"><div class="k">کل پیش‌بینی‌ها</div><div class="v" id="perf-total">0</div></div>
+        <div class="chip"><div class="k">درست</div><div class="v up" id="perf-correct">0</div></div>
+        <div class="chip"><div class="k">غلط</div><div class="v down" id="perf-wrong">0</div></div>
+        <div class="chip"><div class="k">دقت</div><div class="v" id="perf-accuracy">0٪</div></div>
+      </div>
+    </section>
+
+    <section class="glass" style="margin-bottom:18px;">
+      <div class="section-title">وضعیت بازار (Regime)</div>
+      <div id="regime-box"><div class="meta-row"><span>در انتظار تحلیل…</span></div></div>
+    </section>
+
+    <section class="glass" style="margin-bottom:18px;">
+      <div class="section-title">بهترین استراتژی‌ها بر اساس عملکرد تاریخی</div>
+      <div id="strategy-ranking-box"><div class="meta-row"><span>هنوز داده‌ای ثبت نشده</span></div></div>
+    </section>
+
+    <section class="glass" style="margin-bottom:18px;">
+      <div class="section-title">پیکربندی معامله</div>
+      <div id="setup-box"><div class="meta-row"><span>در انتظار سیگنال فعال…</span></div></div>
+    </section>
+
+    <section class="glass">
+      <div class="section-title">وضعیت استراتژی‌ها</div>
+      <div id="strategies-box"><div class="meta-row"><span>در انتظار تحلیل…</span></div></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'js/coin.js' %}?v=5"></script>
+{% endblock %}
