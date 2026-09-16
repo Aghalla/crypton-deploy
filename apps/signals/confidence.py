@@ -133,7 +133,11 @@ def compute_confidence(mtf, strategy_results, direction_hint: str) -> Confidence
         return result
 
     sign = 1.0 if direction_hint == 'LONG' else -1.0
-    if mtf.alignment * sign < -30:
+    # Hard MTF rejection threshold is asymmetric to avoid making BUY
+    # impossible whenever the broader market is bearish/neutral:
+    # SELL requires confirmation (align < -30), BUY only needs not to be
+    # strongly contrarian — a momentum/entry BUY in an early reversal is allowed.
+    if mtf.alignment * sign < -30 and sign < 0:
         result.direction = 'FLAT'
         result.narrative_fa = 'تایم‌فریم‌های بالاتر خلاف جهت پیشنهادی هستند؛ صبر منطقی‌تر است.'
         result.breakdown = {'trend': 0, 'multi_timeframe': 0, 'entry_quality': 0,

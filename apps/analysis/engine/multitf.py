@@ -33,9 +33,9 @@ class MultiTimeframeResult:
     summary_fa: str = ''
 
     def bias(self) -> str:
-        if self.alignment > 40:
+        if self.alignment > 30:
             return 'bullish'
-        if self.alignment < -40:
+        if self.alignment < -30:
             return 'bearish'
         return 'neutral'
 
@@ -114,9 +114,9 @@ def analyze_multi_timeframe(dfs: dict[str, pd.DataFrame]) -> MultiTimeframeResul
 
     s1h, s5m = result.snapshot('1h'), result.snapshot('5m')
     names = {'up': 'صعودی', 'down': 'نزولی', 'sideways': 'خنثی'}
-    if result.alignment > 40:
+    if result.alignment > 30:
         direction = 'صعودی'
-    elif result.alignment < -40:
+    elif result.alignment < -30:
         direction = 'نزولی'
     else:
         direction = 'خنثی'

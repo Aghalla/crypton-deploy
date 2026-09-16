@@ -187,6 +187,7 @@ def _is_5m_boundary() -> bool:
 
 def analysis_loop(stop: threading.Event):
     from apps.market_data.services.data import is_connected
+    _last_full_analysis = 0
     while not stop.is_set():
         started = time.time()
         try:
@@ -197,10 +198,11 @@ def analysis_loop(stop: threading.Event):
             from apps.paper_trading.services import monitor_paper_trades
             for coin in get_coins():
                 retry_on_db_lock(lambda c=coin: check_open_signals(c))
-            # only run full analysis after a 5M candle closes
-            if _is_5m_boundary():
+            # run full analysis on 5M boundary or if enough time has passed
+            if _is_5m_boundary() or (time.time() - _last_full_analysis > settings.ANALYSIS_INTERVAL_SECONDS + 60):
                 for coin in get_coins():
                     retry_on_db_lock(lambda c=coin: analyze_coin(c))
+                _last_full_analysis = time.time()
             retry_on_db_lock(monitor_paper_trades)
         except Exception:
             logger.exception('analysis loop error')
