@@ -73,5 +73,24 @@ apps/
 - `GET /api/performance/` — آمار دقت هوش مصنوعی
 - `WS /ws/dashboard/` — به‌روزرسانی زنده
 
+## نحوه اجرا (خلاصه)
+```bash
+git clone https://github.com/Aghalla/crypton-deploy.git
+cd crypton-deploy
+python -m venv .venv && source .venv/bin/activate  # ویندوز: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env   # SECRET_KEY و در صورت نیاز BINANCE_PROXY را پر کنید
+python manage.py migrate
+python manage.py seed_coins
+python manage.py train_ai
+python manage.py runserver
+# http://127.0.0.1:8000
+```
+
+## لایسنس
+MIT — فایل `LICENSE` را ببینید.
+
 ## یادداشت
 این ابزار صرفاً تحلیلی و آموزشی است؛ خروجی آن توصیه مالی نیست.
+
+> وایب کدش کردم — Vibe coded with AI ✨

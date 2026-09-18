@@ -55,14 +55,12 @@ def _synthetic_mtf(df_5m: pd.DataFrame, i: int):
     return mtf
 
 
-def _simulate_trade(df, i: int, direction: str, atr: float) -> bool | None:
-    """Return True/False whether TP hit before SL, None if unresolved."""
-    entry = float(df['close'].iloc[i])
-    sl_dist = 1.5 * atr
-    if direction == 'LONG':
-        sl, tp = entry - sl_dist, entry + 1.8 * sl_dist
-    else:
-        sl, tp = entry + sl_dist, entry - 1.8 * sl_dist
+def _simulate_trade(df, i: int, direction: str, sl: float, tp: float) -> bool | None:
+    """Return True/False whether TP hit before SL, None if unresolved.
+
+    Uses the exact SL/TP levels from build_trade_setup (dynamic per signal
+    strength + structure), so historical labels match live trade parameters.
+    """
     window = df.iloc[i + 1:i + 1 + MAX_TRADE_BARS]
     for _, bar in window.iterrows():
         if direction == 'LONG':
@@ -107,13 +105,18 @@ def build_historical_samples(coin: Coin) -> tuple[list[dict], int]:
         atr_pct = atr / price
 
         for direction in ('LONG', 'SHORT'):
-            outcome = _simulate_trade(df, i, direction, atr)
-            if outcome is None:
-                continue
             confidence = compute_confidence(mtf, strategy_results, direction)
             if confidence.direction not in ('LONG', 'SHORT'):
                 continue
-            setup = build_trade_setup(direction, price, atr, mtf.snapshot('5m').structure)
+            from apps.signals.confidence import map_score_to_signal_type
+            signal_type = map_score_to_signal_type(confidence.score, confidence.direction)
+            setup = build_trade_setup(direction, price, atr, mtf.snapshot('5m').structure,
+                                      signal_type=signal_type)
+            if setup.stop_loss == 0 or setup.take_profit == 0:
+                continue
+            outcome = _simulate_trade(df, i, direction, setup.stop_loss, setup.take_profit)
+            if outcome is None:
+                continue
             feats = build_feature_vector(mtf, strategy_results, confidence, setup, atr_pct)
             samples.append({
                 'features': feats,

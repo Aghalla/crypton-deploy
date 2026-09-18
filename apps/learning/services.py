@@ -26,7 +26,7 @@ from apps.learning.models import ModelMetadata, TrainingSample
 logger = logging.getLogger('crypton.learning')
 
 MODEL_FILENAME = 'signal_model.joblib'
-ADJUSTMENT_CAP = 15.0
+ADJUSTMENT_CAP = 20.0
 
 
 def _models_dir() -> Path:
