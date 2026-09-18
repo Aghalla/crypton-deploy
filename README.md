@@ -87,6 +87,14 @@ python manage.py runserver
 # http://127.0.0.1:8000
 ```
 
+## اجرا با Docker (پیشنهادی برای همیشه روشن)
+```bash
+cp .env.example .env  # پر کنید
+docker compose up -d          # یا: docker pull ghcr.io/aghalla/crypton-deploy:latest
+# http://localhost:8000
+# برای همیشه روشن باید روی سرور/VPS اجرا شود — روی PC شخصی با خاموش شدن سیستم، کانتینر هم خاموش می‌شود (restart: always فقط بعد از ریبوت سرور خودکار برمی‌گردد)
+```
+
 ## لایسنس
 MIT — فایل `LICENSE` را ببینید.
 
